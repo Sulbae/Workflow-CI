@@ -8,6 +8,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
+# Konfigurasi MLflow
+mlflow.set_tracking_uri("http://127.0.0.1:5000")
+
 # Fungsi split data
 def split_data(data, test_size=0.25, random_state=42):
     X = data.drop(columns='Potability', axis=1)

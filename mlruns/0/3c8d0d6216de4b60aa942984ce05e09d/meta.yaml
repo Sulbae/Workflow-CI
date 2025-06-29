@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/0/3c8d0d6216de4b60aa942984ce05e09d/artifacts
+end_time: 1751191683433
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 3c8d0d6216de4b60aa942984ce05e09d
+run_name: brawny-dolphin-488
+run_uuid: 3c8d0d6216de4b60aa942984ce05e09d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1751191667339
+status: 4
+tags: []
+user_id: ACER
