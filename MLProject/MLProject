@@ -10,6 +10,6 @@ entry_points:
             dataset: {type: string, default: "water_potability_preprocessing.csv"}
         command: >
             python modelling.py
-                --n_estimators {n_estimators}
-                --max_depth {max_depth}
-                --dataset {dataset}
+            --n_estimators {n_estimators}
+            --max_depth {max_depth}
+            --dataset {dataset}
