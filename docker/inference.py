@@ -7,23 +7,29 @@ import requests
 import json
 
 MODEL_PATH = "model/best_model"
+TEST_FILE = "sample_test.csv"
 
 model = mlflow.pyfunc.load_model(MODEL_PATH)
 
-def prediction(data):
-    df = pd.DataFrame([data])
+COLUMNS = [
+    "ph",
+    "Hardness",
+    "Solids",
+    "Chloramines",
+    "Sulfate",
+    "Conductivity",
+    "Organic_carbon",
+    "Trihalomethanes",
+    "Turbidity"
+]
+
+def prediction(data_path: str):
+    df = pd.read_csv(data_path, header=None)
+    df.columns = COLUMNS
+
     result = model.predict(df)
+    
     return result[0]
 
 if __name__ == "__main__":
-    sample = {
-        "ph": 1,
-        "Hardness": 1,
-        "Solids": 1,
-        "Chloramines": 1,
-        "Sulfate": 1,
-        "Conductivity": 1,
-        "Organic_carbon": 1,
-        "Trihalomethanes": 1,
-        "Turbidity":
-    }
+    prediction(TEST_FILE)
