@@ -1,4 +1,5 @@
 import mlflow
+from mlflow.tracking import MlflowClient
 import dagshub
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
@@ -94,3 +95,19 @@ with mlflow.start_run(run_name="best_model_run"):
     
     model_uri = mlflow.get_artifact_uri("best_model")
     print("BEST_MODEL_URI:", model_uri)
+
+    result = mlflow.register_model(
+        model_uri=model_uri,
+        name="potability_model"
+    )
+
+    client = MlflowClient()
+
+    client.transition_model_version_stage(
+        name="potability_model",
+        version=result.version,
+        stage="Production",
+        archive_existing_versions=True
+    )
+
+    print(f"REGISTERED_MODEL_VERSION: {result.version}")
