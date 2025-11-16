@@ -21,11 +21,10 @@ COLUMNS = [
 ]
 
 def load_model():
-    if TRACKING_URI:
-        mlflow.set_tracking_uri(TRACKING_URI)
+    MODEL_REGISTRY = "models:/potability_model/Production"
     
-    model = mlflow.pyfunc.load_model(MODEL_URI)
-    print(f"[INFO] Model loaded successfuly from: {MODEL_URI}")
+    model = mlflow.pyfunc.load_model(MODEL_REGISTRY)
+    print(f"[INFO] Model loaded successfuly from: {MODEL_REGISTRY}")
     
     return model
 

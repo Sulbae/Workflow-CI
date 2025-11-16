@@ -83,3 +83,9 @@ jobs:
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/potability-model:latest
+      
+      # Inference
+      - name: Run inference test
+        run: python inference.py
+        env:
+          MODEL_URI: ${{ env.MODEL_URI }}
