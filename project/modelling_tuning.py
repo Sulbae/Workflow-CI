@@ -19,6 +19,8 @@ dagshub.init(
     repo_name="Latihan-MLFlow",
     mlflow=True
 )
+mlflow.set_tracking_uri("https://dagshub.com/Sulbae/Latihan-MLFlow.mlflow")
+
 # Set Nama Eksperimen
 mlflow.set_experiment("Modelling Random Forest with Grid Search")
 
@@ -89,3 +91,6 @@ with mlflow.start_run(run_name="best_model_run"):
         artifact_path="best_model",
         input_example=input_example
     )
+    
+    model_uri = mlflow.get_artifact_uri("best_model")
+    print("BEST_MODEL_URI:", model_uri)
