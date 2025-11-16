@@ -17,8 +17,12 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy best model
-COPY best_model.pkl ./model.pkl
+COPY model/best_model ./model/best_model
 
 # Copy inference script
 COPY inference.py .
 
+# Expose API port (FastAPI/Flask)
+EXPOSE 8080
+
+# 
