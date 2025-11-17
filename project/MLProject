@@ -1,7 +1,6 @@
 name: workflow-ci
 
-docker_env: 
-  image: sulbae/mlflow-env:latest
+conda_env: conda.yaml
 
 entry_points:
   train_tuning:

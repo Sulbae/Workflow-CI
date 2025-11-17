@@ -14,16 +14,14 @@ N_ESTIMATORS_RANGE = np.linspace(10, 100, 3, dtype=int)
 MAX_DEPTH_RANGE = np.linspace(1, 50, 3, dtype=int)
 TEST_SIZE = 0.25
 
-# Set Tracking melalui DagsHub
-dagshub.init(
-    repo_owner="Sulbae",
-    repo_name="Latihan-MLFlow",
-    mlflow=True
-)
-mlflow.set_tracking_uri("https://dagshub.com/Sulbae/Latihan-MLFlow.mlflow")
+MODEL_NAME = "potability_model"
+EXPERIMENT_NAME = "Modelling Random Forest with Grid Search"
 
+# Set Tracking
+mlflow.set_tracking_uri("https://dagshub.com/Sulbae/Latihan-MLFlow.mlflow")
 # Set Nama Eksperimen
-mlflow.set_experiment("Modelling Random Forest with Grid Search")
+mlflow.set_experiment(EXPERIMENT_NAME)
+client = MlflowClient()
 
 # Load dataset
 data = pd.read_csv(DATASET_PATH)
@@ -48,8 +46,10 @@ for n_estimators in N_ESTIMATORS_RANGE:
         with mlflow.start_run(run_name=f"grid_search_{n_estimators}_{max_depth}") as run:
 
             # Log Parameter
-            mlflow.log_param("n_estimators", n_estimators)
-            mlflow.log_param("max_depth", max_depth)
+            mlflow.log_params({
+                "n_estimators": n_estimators, 
+                "max_depth": max_depth
+            })
             mlflow.log_param("test_size", TEST_SIZE)
 
             # Train model
@@ -94,17 +94,13 @@ with mlflow.start_run(run_name="best_model_run"):
     )
     
     model_uri = mlflow.get_artifact_uri("best_model")
-    print("BEST_MODEL_URI:", model_uri)
 
     result = mlflow.register_model(
         model_uri=model_uri,
-        name="potability_model"
+        name=MODEL_NAME
     )
-
-    client = MlflowClient()
-
     client.transition_model_version_stage(
-        name="potability_model",
+        name=MODEL_NAME,
         version=result.version,
         stage="Production",
         archive_existing_versions=True
