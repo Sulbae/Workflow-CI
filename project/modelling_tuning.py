@@ -46,7 +46,7 @@ if mlflow.active_run() is not None:
 
 for n_estimators in N_ESTIMATORS_RANGE:
     for max_depth in MAX_DEPTH_RANGE:
-        with mlflow.start_run(run_name=f"grid_search_{n_estimators}_{max_depth}") as run:
+        with mlflow.start_run(run_name=f"grid_search_{n_estimators}_{max_depth}", nested=True) as run:
 
             # Log Parameter
             mlflow.log_params({
