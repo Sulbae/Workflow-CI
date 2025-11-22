@@ -3,19 +3,21 @@ from mlflow.tracking import MlflowClient
 import dagshub
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import precision_score, recall_score, f1_score
 import random
 import numpy as np
 
 # Konfigurasi 
 DATASET_PATH = "water_potability_preprocessing.csv"
-N_ESTIMATORS_RANGE = np.linspace(10, 100, 3, dtype=int)
-MAX_DEPTH_RANGE = np.linspace(1, 50, 3, dtype=int)
 TEST_SIZE = 0.25
-
 MODEL_NAME = "water_potability"
-EXPERIMENT_NAME = "Modelling Random Forest with Grid Search"
+EXPERIMENT_NAME = "Random Forest_Grid Search"
+
+param_grid = {
+    "n_estimators": [10, 50, 100],
+    "max_depth": [1, 5, 25]
+}
 
 np.random.seed(42)
 
@@ -39,69 +41,52 @@ X_train, X_test, y_train, y_test = train_test_split(
 # Menyimpan snippet atau input sample
 input_example = X_train.iloc[0:5]
 
-best_acc = 0
-best_params = {}
-best_model = None
+rf = RandomForestClassifier(random_state=42)
 
-for n_estimators in N_ESTIMATORS_RANGE:
-    for max_depth in MAX_DEPTH_RANGE:
-        with mlflow.start_run(run_name=f"grid_search_{n_estimators}_{max_depth}", nested=True) as run:
+grid_search = GridSearchCV(rf, param_grid, scoring="accuracy", cv=3)
 
-            # Log Parameter
-            mlflow.log_params({
-                "n_estimators": n_estimators, 
-                "max_depth": max_depth
-            })
-            mlflow.log_param("test_size", TEST_SIZE)
+with mlflow.start_run(run_name="grid_search_rf") as run:
 
-            # Train model
-            model = RandomForestClassifier(
-                n_estimators=n_estimators, 
-                max_depth=max_depth, 
-                random_state=42
-            )
-            model.fit(X_train, y_train)
+    # Train model
+    grid_search.fit(X_train, y_train)
 
-            # Evaluate model
-            y_pred = model.predict(X_test)
-            
-            accuracy = model.score(X_test, y_test)
-            precision = precision_score(y_test, y_pred, average="weighted")
-            recall = recall_score(y_test, y_pred, average="weighted")
-            f1 = f1_score(y_test, y_pred, average="weighted")
+    # Ambil model terbaik
+    best_model = grid_search.best_estimator_
+    best_params = grid_search.best_params_
 
-            # Log Metrics
-            mlflow.log_metric("accuracy", accuracy)
-            mlflow.log_metric("precision", precision)
-            mlflow.log_metric("recall", recall)
-            mlflow.log_metric("f1_score", f1)
+    # Log Param
+    mlflow.log_param("test_size", TEST_SIZE)
+    mlflow.log_params(best_params)
 
-            # Save the best model
-            if accuracy > best_acc:
-                best_acc = accuracy
-                best_params = {
-                    "n_estimators": n_estimators, 
-                    "max_depth": max_depth
-                }
-                best_model = model
-                best_run_id = run.info.run_id
+    # Evaluate model
+    y_pred = best_model.predict(X_test)
+    
+    accuracy = best_model.score(X_test, y_test)
+    precision = precision_score(y_test, y_pred, average="weighted")
+    recall = recall_score(y_test, y_pred, average="weighted")
+    f1 = f1_score(y_test, y_pred, average="weighted")
 
-# Log best model
-mlflow.log_params(best_params)
-mlflow.log_metric("best_accuracy", best_acc)
+    # Log Metrics
+    mlflow.log_metric("accuracy", accuracy)
+    mlflow.log_metric("precision", precision)
+    mlflow.log_metric("recall", recall)
+    mlflow.log_metric("f1_score", f1)
 
-if best_model is not None:
-    mlflow.sklearn.log_model(
-        sk_model=best_model,
-        artifact_path="best_model",
-        input_example=input_example
-)
+    # Log model
+    if best_model is not None:
+        mlflow.sklearn.log_model(
+            sk_model=best_model,
+            artifact_path="best_model",
+            input_example=input_example
+        )
+
+# Model Regis
+model_uri = f"runs:/{run.info.run_id}/best_model"
 
 model_registered = mlflow.register_model(
-    model_uri=f"runs:/{best_run_id}/best_model",
+    model_uri=model_uri,
     name=MODEL_NAME
 )
-
 version = model_registered.version
 
 client.transition_model_version_stage(
