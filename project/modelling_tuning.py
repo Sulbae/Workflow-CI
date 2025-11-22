@@ -41,71 +41,74 @@ best_acc = 0
 best_params = {}
 best_model = None
 
-for n_estimators in N_ESTIMATORS_RANGE:
-    for max_depth in MAX_DEPTH_RANGE:
-        with mlflow.start_run(run_name=f"grid_search_{n_estimators}_{max_depth}", nested=True) as run:
+with mlflow.start_run(run_name="parent_grid_search") as parent_run:
+    for n_estimators in N_ESTIMATORS_RANGE:
+        for max_depth in MAX_DEPTH_RANGE:
+            with mlflow.start_run(run_name=f"grid_search_{n_estimators}_{max_depth}", nested=True) as run:
 
-            # Log Parameter
-            mlflow.log_params({
-                "n_estimators": n_estimators, 
-                "max_depth": max_depth
-            })
-            mlflow.log_param("test_size", TEST_SIZE)
-
-            # Train model
-            model = RandomForestClassifier(
-                n_estimators=n_estimators, 
-                max_depth=max_depth, 
-                random_state=42
-            )
-            model.fit(X_train, y_train)
-
-            # Evaluate model
-            y_pred = model.predict(X_test)
-            
-            accuracy = model.score(X_test, y_test)
-            precision = precision_score(y_test, y_pred, average="weighted")
-            recall = recall_score(y_test, y_pred, average="weighted")
-            f1 = f1_score(y_test, y_pred, average="weighted")
-
-            # Log Metrics
-            mlflow.log_metric("accuracy", accuracy)
-            mlflow.log_metric("precision", precision)
-            mlflow.log_metric("recall", recall)
-            mlflow.log_metric("f1_score", f1)
-
-            # Save the best model
-            if accuracy > best_acc:
-                best_acc = accuracy
-                best_params = {
+                # Log Parameter
+                mlflow.log_params({
                     "n_estimators": n_estimators, 
                     "max_depth": max_depth
-                }
-                best_model = model
+                })
+                mlflow.log_param("test_size", TEST_SIZE)
 
-run = mlflow.active_run()
+                # Train model
+                model = RandomForestClassifier(
+                    n_estimators=n_estimators, 
+                    max_depth=max_depth, 
+                    random_state=42
+                )
+                model.fit(X_train, y_train)
 
-mlflow.log_params(best_params)
-mlflow.log_metric("best_accuracy", best_acc)
+                # Evaluate model
+                y_pred = model.predict(X_test)
+                
+                accuracy = model.score(X_test, y_test)
+                precision = precision_score(y_test, y_pred, average="weighted")
+                recall = recall_score(y_test, y_pred, average="weighted")
+                f1 = f1_score(y_test, y_pred, average="weighted")
 
-mlflow.sklearn.log_model(
-    sk_model=best_model,
-    artifact_path="best_model",
-    input_example=input_example
-)
+                # Log Metrics
+                mlflow.log_metric("accuracy", accuracy)
+                mlflow.log_metric("precision", precision)
+                mlflow.log_metric("recall", recall)
+                mlflow.log_metric("f1_score", f1)
 
-model_registered = mlflow.register_model(
-    model_uri=f"runs:/{run.info.run_id}/best_model",
-    name=MODEL_NAME
-)
+                # Save the best model
+                if accuracy > best_acc:
+                    best_acc = accuracy
+                    best_params = {
+                        "n_estimators": n_estimators, 
+                        "max_depth": max_depth
+                    }
+                    best_model = model
 
-version = model_registered.version
+    run = mlflow.active_run()
+    parent_run_id = parent_run.info.run_id
 
-client.transition_model_version_stage(
-    name=MODEL_NAME,
-    version=version,
-    stage="Production",
-    archive_existing_versions=True
-)
+    mlflow.log_params(best_params)
+    mlflow.log_metric("best_accuracy", best_acc)
 
-print(f"REGISTERED_MODEL_VERSION: {version}")
+    if best_model is not None:
+        mlflow.sklearn.log_model(
+            sk_model=best_model,
+            artifact_path="best_model",
+            input_example=input_example
+    )
+
+    model_registered = mlflow.register_model(
+        model_uri=f"runs:/{parent_run_id}/best_model",
+        name=MODEL_NAME
+    )
+
+    version = model_registered.version
+
+    client.transition_model_version_stage(
+        name=MODEL_NAME,
+        version=version,
+        stage="Production",
+        archive_existing_versions=True
+    )
+
+    print(f"REGISTERED_MODEL_VERSION: {version}")
