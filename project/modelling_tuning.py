@@ -14,7 +14,7 @@ N_ESTIMATORS_RANGE = np.linspace(10, 100, 3, dtype=int)
 MAX_DEPTH_RANGE = np.linspace(1, 50, 3, dtype=int)
 TEST_SIZE = 0.25
 
-MODEL_NAME = "potability_model"
+MODEL_NAME = "water_potability"
 EXPERIMENT_NAME = "Modelling Random Forest with Grid Search"
 
 # Set Tracking
@@ -83,7 +83,9 @@ for n_estimators in N_ESTIMATORS_RANGE:
                 }
                 best_model = model
 
-with mlflow.start_run(run_name="best_model_run"):
+with mlflow.start_run(run_name="best_model_run") as run:
+    run_id = run.info.run_id
+    
     mlflow.log_params(best_params)
     mlflow.log_metric("best_accuracy", best_acc)
 
@@ -92,18 +94,19 @@ with mlflow.start_run(run_name="best_model_run"):
         artifact_path="best_model",
         input_example=input_example
     )
-    
-    model_uri = mlflow.get_artifact_uri("best_model")
 
-    result = mlflow.register_model(
-        model_uri=model_uri,
+    model_registered = mlflow.register_model(
+        model_uri=f"runs:/{run_id}/best_model",
         name=MODEL_NAME
     )
+
+    version = model_registered.version
+
     client.transition_model_version_stage(
         name=MODEL_NAME,
-        version=result.version,
+        version=version,
         stage="Production",
         archive_existing_versions=True
     )
 
-    print(f"REGISTERED_MODEL_VERSION: {result.version}")
+    print(f"REGISTERED_MODEL_VERSION: {version}")
