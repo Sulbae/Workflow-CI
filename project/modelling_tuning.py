@@ -17,6 +17,8 @@ TEST_SIZE = 0.25
 MODEL_NAME = "water_potability"
 EXPERIMENT_NAME = "Modelling Random Forest with Grid Search"
 
+np.random.seed(42)
+
 # Set Tracking
 mlflow.set_tracking_uri("https://dagshub.com/Sulbae/Latihan-MLFlow.mlflow")
 # Set Nama Eksperimen
