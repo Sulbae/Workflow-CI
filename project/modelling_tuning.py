@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import precision_score, recall_score, f1_score
 import random
 import numpy as np
+import os
 
 # Konfigurasi 
 DATASET_PATH = "water_potability_preprocessing.csv"
@@ -79,8 +80,10 @@ if best_model is not None:
 )
 
 # Model Regis
-active_run = mlflow.active_run()
-model_uri = f"runs:/{active_run.info.run_id}/best_model"
+ci_run_id = os.environ.get("MLFLOW_RUN_ID")
+print("CI/CD MLflow run id:", ci_run_id)
+
+model_uri = f"runs:/{ci_run_id}/best_model"
 
 model_registered = mlflow.register_model(
     model_uri=model_uri,
