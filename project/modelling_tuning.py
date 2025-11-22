@@ -84,7 +84,7 @@ with mlflow.start_run(run_name="parent_grid_search") as parent_run:
                     }
                     best_model = model
 
-    run = mlflow.active_run()
+    # Log best model
     parent_run_id = parent_run.info.run_id
 
     mlflow.log_params(best_params)
