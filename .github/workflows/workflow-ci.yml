@@ -33,7 +33,7 @@ jobs:
       # Run MLflow Training
       - name: Run MLflow Project
         run: |
-          cd MLProject
+          cd project
           mlflow run . -e train_tuning
 
       # Save artifact ke GitHub
