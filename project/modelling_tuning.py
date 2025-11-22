@@ -41,6 +41,9 @@ best_acc = 0
 best_params = {}
 best_model = None
 
+if mlflow.active_run() is not None:
+    mlflow.end_run()
+
 for n_estimators in N_ESTIMATORS_RANGE:
     for max_depth in MAX_DEPTH_RANGE:
         with mlflow.start_run(run_name=f"grid_search_{n_estimators}_{max_depth}") as run:
@@ -82,6 +85,9 @@ for n_estimators in N_ESTIMATORS_RANGE:
                     "max_depth": max_depth
                 }
                 best_model = model
+
+if mlflow.active_run() is not None:
+    mlflow.end_run()
 
 with mlflow.start_run(run_name="best_model_run") as run:
     run_id = run.info.run_id
