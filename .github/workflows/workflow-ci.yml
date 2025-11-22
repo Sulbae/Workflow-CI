@@ -32,6 +32,15 @@ jobs:
           pip install setuptools wheel  
           pip install mlflow==2.14 scikit-learn pandas numpy
 
+      # Set up Miniconda
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: true
+          python-version: "3.12"
+          activate-environment: ""
+          use-mamba: true
+
       # Run MLflow Training
       - name: Run MLflow Project
         run: |
