@@ -28,6 +28,8 @@ jobs:
       # Install MLflow
       - name: Install dependencies
         run: |
+          pip install --upgrade pip
+          pip install setuptools wheel  
           pip install mlflow==2.14 scikit-learn pandas numpy
 
       # Run MLflow Training
