@@ -34,22 +34,24 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with:
           auto-update-conda: true
-        # python-version: "3.12"
-        # activate-environment: "latihan-mlflow-env"
-          environment-file: project/conda.yaml
+          python-version: "3.12"
           use-mamba: true
+          activate-environment: "mlflow-env"
+          environment-file: project/conda.yaml
+          auto-activate-base: false
 
-      # Install MLflow
-      - name: Install dependencies
+      # Verify environment
+      - name: Verify environment
         run: |
-          pip install --upgrade pip 
-          pip install mlflow==2.14 scikit-learn pandas numpy setuptools wheel
-
+          which python
+          python --version
+          pip list
+      
       # Run MLflow Training
       - name: Run MLflow Project
         run: |
           cd project
-          mlflow run . -e train_tuning
+          mlflow run . -e train_tuning --env-manager=local
 
       # Save artifact ke GitHub
       - name: Upload MLflow Artifacts

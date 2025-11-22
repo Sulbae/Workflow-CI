@@ -1,6 +1,7 @@
 name: workflow-ci
 
 conda_env: conda.yaml
+env_manager: local
 
 entry_points:
   train_tuning:
