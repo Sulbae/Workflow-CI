@@ -43,7 +43,7 @@ best_acc = 0
 best_params = {}
 best_model = None
 
-with mlflow.start_run(run_name="parent_grid_search") as parent_run:
+with mlflow.start_run(run_name="parent_grid_search", nested=True) as parent_run:
     for n_estimators in N_ESTIMATORS_RANGE:
         for max_depth in MAX_DEPTH_RANGE:
             with mlflow.start_run(run_name=f"grid_search_{n_estimators}_{max_depth}", nested=True) as run:
