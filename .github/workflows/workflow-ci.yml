@@ -39,17 +39,15 @@ jobs:
           activate-environment: "mlflow-env"
           environment-file: project/conda.yaml
           auto-activate-base: false
-
-      # Verify environment
-      - name: Verify environment
-        run: |
-          which python
-          python --version
-          pip list
       
       # Run MLflow Training
       - name: Run MLflow Project
         run: |
+          source "$CONDA/etc/profile.d/conda.sh"
+          conda activate mlflow-env
+          
+          pip install mlflow==2.14 scikit-learn pandas numpy setuptools wheel  
+
           cd project
           mlflow run . -e train_tuning --env-manager=local
 
