@@ -84,7 +84,6 @@ for n_estimators in N_ESTIMATORS_RANGE:
                 best_model = model
 
 run = mlflow.active_run()
-run_id = run.info.run_id
 
 mlflow.log_params(best_params)
 mlflow.log_metric("best_accuracy", best_acc)
@@ -96,7 +95,7 @@ mlflow.sklearn.log_model(
 )
 
 model_registered = mlflow.register_model(
-    model_uri=f"runs:/{run_id}/best_model",
+    model_uri=f"runs:/{run.info.run_id}/best_model",
     name=MODEL_NAME
 )
 
