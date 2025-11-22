@@ -54,8 +54,8 @@ jobs:
       - name: MLflow Build Docker Image
         run: |
           mlflow models build-docker \
-            --model-uri "models:/water_potability_v1/1" \
-            --build-image-name ${{ secrets.DOCKERHUB_USERNAME }}/mlflow-model:latest
+            --model-uri "models:/water_potability/Production" \
+            --name ${{ secrets.DOCKERHUB_USERNAME }}/mlflow-model:latest
 
       # Push Docker Image
       - name: Push Docker Image
