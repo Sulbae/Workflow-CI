@@ -86,33 +86,31 @@ for n_estimators in N_ESTIMATORS_RANGE:
                 }
                 best_model = model
 
-if mlflow.active_run() is not None:
-    mlflow.end_run()
 
-with mlflow.start_run(run_name="best_model_run") as run:
-    run_id = run.info.run_id
-    
-    mlflow.log_params(best_params)
-    mlflow.log_metric("best_accuracy", best_acc)
+run = mlflow.active_run()
+run_id = run.info.run_id
 
-    mlflow.sklearn.log_model(
-        sk_model=best_model,
-        artifact_path="best_model",
-        input_example=input_example
-    )
+mlflow.log_params(best_params)
+mlflow.log_metric("best_accuracy", best_acc)
 
-    model_registered = mlflow.register_model(
-        model_uri=f"runs:/{run_id}/best_model",
-        name=MODEL_NAME
-    )
+mlflow.sklearn.log_model(
+    sk_model=best_model,
+    artifact_path="best_model",
+    input_example=input_example
+)
 
-    version = model_registered.version
+model_registered = mlflow.register_model(
+    model_uri=f"runs:/{run_id}/best_model",
+    name=MODEL_NAME
+)
 
-    client.transition_model_version_stage(
-        name=MODEL_NAME,
-        version=version,
-        stage="Production",
-        archive_existing_versions=True
-    )
+version = model_registered.version
 
-    print(f"REGISTERED_MODEL_VERSION: {version}")
+client.transition_model_version_stage(
+    name=MODEL_NAME,
+    version=version,
+    stage="Production",
+    archive_existing_versions=True
+)
+
+print(f"REGISTERED_MODEL_VERSION: {version}")
