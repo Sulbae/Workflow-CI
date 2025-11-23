@@ -46,7 +46,7 @@ jobs:
           source "$CONDA/etc/profile.d/conda.sh"
           conda activate mlflow-env
           
-          pip install mlflow==2.14 scikit-learn pandas numpy setuptools wheel  
+          pip install -q dagshub 'mlflow>=2,<3' scikit-learn pandas numpy setuptools wheel
 
           cd project
           mlflow run . -e train_tuning --env-manager=local
