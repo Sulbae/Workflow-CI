@@ -13,7 +13,7 @@ MODEL_NAME = "water_potability"
 
 param_grid = {
     "n_estimators": [10, 50, 100],
-    "max_depth": [1, 5, 25]
+    "max_depth": [1, 25, 50]
 }
 
 np.random.seed(42)

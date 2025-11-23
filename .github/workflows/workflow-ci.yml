@@ -55,7 +55,7 @@ jobs:
           
           pip install -q dagshub 'mlflow==2.22.0' scikit-learn pandas numpy setuptools wheel
 
-          OUTPUT=$(cd project && mlflow run . -e train_tuning --env-manager=local -P experiment_name="Random Forest_Grid Search")
+          OUTPUT=$(mlflow run project -e train_tuning --env-manager=local -P experiment_name="Random Forest_Grid Search")
 
           RUN_ID=$(echo "$OUTPUT" | grep 'RUN ID:' | tail -1 | awk '{print $3}')
 
@@ -77,7 +77,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mlflow-artifacts
-          path: project/mlruns
+          path: mlruns
 
       # Login ke Docker Hub
       - name: Login to Docker Hub
