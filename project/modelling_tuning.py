@@ -1,17 +1,13 @@
 import mlflow
 from mlflow.tracking import MlflowClient
-import dagshub
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import precision_score, recall_score, f1_score
-import random
 import numpy as np
-import os
-import time
 import argparse
+import time
 
-# Konfigurasi 
 DATASET_PATH = "water_potability_preprocessing.csv"
 TEST_SIZE = 0.25
 MODEL_NAME = "water_potability"
@@ -27,74 +23,62 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--experiment_name")
 args = parser.parse_args()
 
+mlflow.set_experiment(args.experiment_name)
+
 client = MlflowClient()
 
-# Load dataset
+# Load data
 data = pd.read_csv(DATASET_PATH)
-
-# Split data
 X = data.drop(columns=['Potability'], axis=1)
-y = data['Potability']
+y = data["Potability"]
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=TEST_SIZE, 
-    random_state=42)
+    X, y, test_size=TEST_SIZE, random_state=42
+)
 
-# Menyimpan snippet atau input sample
-input_example = X_train.iloc[0:5]
+input_example = X_train.iloc[:5]
 
 rf = RandomForestClassifier(random_state=42)
+grid = GridSearchCV(rf, param_grid, scoring="accuracy", cv=3)
 
-grid_search = GridSearchCV(rf, param_grid, scoring="accuracy", cv=3)
+# Run Training
+with mlflow.start_run(run_name="train_tuning") as run:
 
-active_run = mlflow.active_run()
-if active_run is None:
-    raise Exception("ERROR: No active MLflow run. MLflow Project did not start a run.")
+    print("RUN ID:", run.info.run_id)
 
-run_id = mlflow.active_run().info.run_id
+    grid.fit(X_train, y_train)
 
-# Train model
-grid_search.fit(X_train, y_train)
+    best_model = grid.best_estimator_
+    best_params = grid.best_params_
 
-# Ambil model terbaik
-best_model = grid_search.best_estimator_
-best_params = grid_search.best_params_
+    mlflow.log_params(best_params)
+    mlflow.log_param("test_size", TEST_SIZE)
 
-# Log Param
-mlflow.log_param("test_size", TEST_SIZE)
-mlflow.log_params(best_params)
+    y_pred = best_model.predict(X_test)
 
-# Evaluate model
-y_pred = best_model.predict(X_test)
+    accuracy = best_model.score(X_test, y_test)
+    precision = precision_score(y_test, y_pred, average="weighted")
+    recall = recall_score(y_test, y_pred, average="weighted")
+    f1 = f1_score(y_test, y_pred, average="weighted")
 
-accuracy = best_model.score(X_test, y_test)
-precision = precision_score(y_test, y_pred, average="weighted")
-recall = recall_score(y_test, y_pred, average="weighted")
-f1 = f1_score(y_test, y_pred, average="weighted")
+    mlflow.log_metric("accuracy", accuracy)
+    mlflow.log_metric("precision", precision)
+    mlflow.log_metric("recall", recall)
+    mlflow.log_metric("f1_score", f1)
 
-# Log Metrics
-mlflow.log_metric("accuracy", accuracy)
-mlflow.log_metric("precision", precision)
-mlflow.log_metric("recall", recall)
-mlflow.log_metric("f1_score", f1)
-
-# Log model
-if best_model is not None:
     mlflow.sklearn.log_model(
-        sk_model=best_model,
+        best_model,
         artifact_path="best_model",
         input_example=input_example
     )
 
-# Model Regis
+    run_id = run.info.run_id
+
+# Regis Model
 model_uri = f"runs:/{run_id}/best_model"
+model_reg = mlflow.register_model(model_uri=model_uri, name=MODEL_NAME)
 
-model_registered = mlflow.register_model(
-    model_uri=model_uri,
-    name=MODEL_NAME
-)
-version = model_registered.version
-
+version = model_reg.version
 time.sleep(2)
 
 client.transition_model_version_stage(
@@ -104,4 +88,4 @@ client.transition_model_version_stage(
     archive_existing_versions=True
 )
 
-print(f"REGISTERED_MODEL_VERSION: {version}")
+print("MODEL VERSION REGISTERED:", version)
