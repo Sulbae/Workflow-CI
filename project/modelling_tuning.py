@@ -8,6 +8,7 @@ from sklearn.metrics import precision_score, recall_score, f1_score
 import random
 import numpy as np
 import os
+import time
 
 # Konfigurasi 
 DATASET_PATH = "water_potability_preprocessing.csv"
@@ -46,50 +47,52 @@ rf = RandomForestClassifier(random_state=42)
 
 grid_search = GridSearchCV(rf, param_grid, scoring="accuracy", cv=3)
 
-# Train model
-grid_search.fit(X_train, y_train)
+with mlflow.start_run() as run:
+    # Train model
+    grid_search.fit(X_train, y_train)
 
-# Ambil model terbaik
-best_model = grid_search.best_estimator_
-best_params = grid_search.best_params_
+    # Ambil model terbaik
+    best_model = grid_search.best_estimator_
+    best_params = grid_search.best_params_
 
-# Log Param
-mlflow.log_param("test_size", TEST_SIZE)
-mlflow.log_params(best_params)
+    # Log Param
+    mlflow.log_param("test_size", TEST_SIZE)
+    mlflow.log_params(best_params)
 
-# Evaluate model
-y_pred = best_model.predict(X_test)
+    # Evaluate model
+    y_pred = best_model.predict(X_test)
 
-accuracy = best_model.score(X_test, y_test)
-precision = precision_score(y_test, y_pred, average="weighted")
-recall = recall_score(y_test, y_pred, average="weighted")
-f1 = f1_score(y_test, y_pred, average="weighted")
+    accuracy = best_model.score(X_test, y_test)
+    precision = precision_score(y_test, y_pred, average="weighted")
+    recall = recall_score(y_test, y_pred, average="weighted")
+    f1 = f1_score(y_test, y_pred, average="weighted")
 
-# Log Metrics
-mlflow.log_metric("accuracy", accuracy)
-mlflow.log_metric("precision", precision)
-mlflow.log_metric("recall", recall)
-mlflow.log_metric("f1_score", f1)
+    # Log Metrics
+    mlflow.log_metric("accuracy", accuracy)
+    mlflow.log_metric("precision", precision)
+    mlflow.log_metric("recall", recall)
+    mlflow.log_metric("f1_score", f1)
 
-# Log model
-if best_model is not None:
-    mlflow.sklearn.log_model(
-        sk_model=best_model,
-        artifact_path="best_model",
-        input_example=input_example
-)
+    # Log model
+    if best_model is not None:
+        mlflow.sklearn.log_model(
+            sk_model=best_model,
+            artifact_path="best_model",
+            input_example=input_example
+        )
+    
+    run_id = run.info.run_id
 
 # Model Regis
-ci_run_id = os.environ.get("MLFLOW_RUN_ID")
-print("CI/CD MLflow run id:", ci_run_id)
-
-model_uri = f"runs:/{ci_run_id}/best_model"
+model_uri = f"runs:/{run_id}/best_model"
 
 model_registered = mlflow.register_model(
     model_uri=model_uri,
     name=MODEL_NAME
 )
 version = model_registered.version
+
+time.sleep(2)
 
 client.transition_model_version_stage(
     name=MODEL_NAME,
