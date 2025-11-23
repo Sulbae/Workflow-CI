@@ -24,7 +24,7 @@ args = parser.parse_args()
 
 # mlflow.set_experiment(args.experiment_name)
 
-client = MlflowClient()
+# client = MlflowClient()
 
 # Load data
 data = pd.read_csv(DATASET_PATH)
@@ -80,7 +80,12 @@ try:
 
     # Regis Model
     model_uri = f"runs:/{run_id}/best_model"
-    model_reg = mlflow.register_model(model_uri=model_uri, name=MODEL_NAME)
+    client = MlflowClient()
+    model_reg = client.create_model_version(
+        name=MODEL_NAME,
+        source=model_uri,
+        run_id=run_id
+    )
 
     version = model_reg.version
 
