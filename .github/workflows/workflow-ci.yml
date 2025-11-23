@@ -73,6 +73,7 @@ jobs:
 
       # Build Docker Image from model registry
       - name: MLflow Build Docker Image
+        shell: bash -l {0}
         run: |
           mlflow models build-docker \
             --model-uri "models:/water_potability/Production" \
