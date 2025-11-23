@@ -20,10 +20,10 @@ param_grid = {
 np.random.seed(42)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--experiment_name")
+parser.add_argument("--experiment_name", type=str, default="Default")
 args = parser.parse_args()
 
-mlflow.set_experiment(args.experiment_name)
+# mlflow.set_experiment(args.experiment_name)
 
 client = MlflowClient()
 
@@ -41,11 +41,18 @@ input_example = X_train.iloc[:5]
 rf = RandomForestClassifier(random_state=42)
 grid = GridSearchCV(rf, param_grid, scoring="accuracy", cv=3)
 
+is_manual_run = not mlflow.active_run()
+
+if is_manual_run:
+    mlflow.start_run(run_name="train_tuning")
+
 # Run Training
-with mlflow.start_run(run_name="train_tuning") as run:
+active_run = mlflow.active_run()
+run_id = active_run.info.run_id
 
-    print("RUN ID:", run.info.run_id)
+print("RUN ID:", run_id)
 
+try:
     grid.fit(X_train, y_train)
 
     best_model = grid.best_estimator_
@@ -72,20 +79,22 @@ with mlflow.start_run(run_name="train_tuning") as run:
         input_example=input_example
     )
 
-    run_id = run.info.run_id
+    # Regis Model
+    model_uri = f"runs:/{run_id}/best_model"
+    model_reg = mlflow.register_model(model_uri=model_uri, name=MODEL_NAME)
 
-# Regis Model
-model_uri = f"runs:/{run_id}/best_model"
-model_reg = mlflow.register_model(model_uri=model_uri, name=MODEL_NAME)
+    version = model_reg.version
+    time.sleep(2)
 
-version = model_reg.version
-time.sleep(2)
+    client.transition_model_version_stage(
+        name=MODEL_NAME,
+        version=version,
+        stage="Production",
+        archive_existing_versions=True
+    )
 
-client.transition_model_version_stage(
-    name=MODEL_NAME,
-    version=version,
-    stage="Production",
-    archive_existing_versions=True
-)
+    print("MODEL VERSION REGISTERED:", version)
 
-print("MODEL VERSION REGISTERED:", version)
+finally:
+    if is_manual_run:
+        mlflow.end_run()
