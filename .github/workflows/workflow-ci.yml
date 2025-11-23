@@ -64,6 +64,19 @@ jobs:
           name: mlflow-artifacts
           path: project/mlruns
 
+      # Get latest model version
+      - name: Get latest model version
+        id: get_version
+        shell: bash -l {0}
+        run: |
+          # Mencari versi tertinggi dari model "water_potability"
+          LATEST_VERSION=$(python -c 'import mlflow; from mlflow.tracking import MlflowClient; client = MlflowClient(); versions = client.search_model_versions("name=\"water_potability\""); print(max([int(v.version) for v in versions]))')
+          
+          echo "Model version found: $LATEST_VERSION"
+          
+          # Simpan ke Environment Variable GitHub Actions agar bisa dipakai step selanjutnya
+          echo "MODEL_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
+
       # Login ke Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -75,8 +88,10 @@ jobs:
       - name: MLflow Build Docker Image
         shell: bash -l {0}
         run: |
+          echo "Building Docker for Model Version: ${{ env.MODEL_VERSION }}"
+          
           mlflow models build-docker \
-            --model-uri "models:/water_potability/Production" \
+            --model-uri "models:/water_potability/${{ env.MODEL_VERSION }}" \
             --name ${{ secrets.DOCKERHUB_USERNAME }}/mlflow-model:latest
 
       # Push Docker Image

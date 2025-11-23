@@ -84,14 +84,6 @@ try:
     model_reg = mlflow.register_model(model_uri=model_uri, name=MODEL_NAME)
 
     version = model_reg.version
-    time.sleep(2)
-
-    client.transition_model_version_stage(
-        name=MODEL_NAME,
-        version=version,
-        stage="Production",
-        archive_existing_versions=True
-    )
 
     print("MODEL VERSION REGISTERED:", version)
 
