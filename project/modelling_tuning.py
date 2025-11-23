@@ -6,7 +6,6 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import precision_score, recall_score, f1_score
 import numpy as np
 import argparse
-import time
 
 DATASET_PATH = "water_potability_preprocessing.csv"
 TEST_SIZE = 0.25
@@ -87,6 +86,9 @@ try:
 
     print("MODEL VERSION REGISTERED:", version)
 
-finally:
-    if is_manual_run:
-        mlflow.end_run()
+except Exception as e:
+    print(f"Error during training or logging: {e}")
+    raise e
+
+if is_manual_run:
+    mlflow.end_run()

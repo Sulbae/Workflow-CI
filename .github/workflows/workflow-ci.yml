@@ -69,12 +69,35 @@ jobs:
         id: get_version
         shell: bash -l {0}
         run: |
-          # Mencari versi tertinggi dari model "water_potability"
-          LATEST_VERSION=$(python -c 'import mlflow; from mlflow.tracking import MlflowClient; client = MlflowClient(); versions = client.search_model_versions("name=\"water_potability\""); print(max([int(v.version) for v in versions]))')
+          export MLFLOW_TRACKING_URI=${{ env.MLFLOW_TRACKING_URI }}
+          export MLFLOW_TRACKING_USERNAME=${{ env.MLFLOW_TRACKING_USERNAME }}
+          export MLFLOW_TRACKING_PASSWORD=${{ env.MLFLOW_TRACKING_PASSWORD }}
+          
+          LATEST_VERSION=$(python -c '
+            import mlflow; 
+            from mlflow.tracking import MlflowClient; 
+            client = MlflowClient(); 
+            
+            versions = client.search_model_versions("name=\"water_potability\""); 
+            
+            version_nums = [int(v.version) for v in versions]; 
+            
+            if version_nums:
+              final_version = max(version_nums)
+            else:
+              final_version = 0
+
+            print(final_version)
+          ')
           
           echo "Model version found: $LATEST_VERSION"
           
-          # Simpan ke Environment Variable GitHub Actions agar bisa dipakai step selanjutnya
+          if [ "$LATEST_VERSION" -eq 0 ]; then
+            echo "::error::ERROR: Model 'water_potability' ditemukan di UI, tetapi pencarian di CI gagal. Cek kembali kredensial atau nama model di Python script."
+            exit 1 # Gagal jika tidak ada versi, karena model HARUS ADA.
+          fi
+
+          # Simpan ke Environment Variable GitHub Actions
           echo "MODEL_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
 
       # Login ke Docker Hub
