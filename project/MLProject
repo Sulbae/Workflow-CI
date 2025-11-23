@@ -5,5 +5,4 @@ env_manager: local
 
 entry_points:
   train_tuning:
-    command: >
-      python modelling_tuning.py
+    command: "python modelling_tuning.py"

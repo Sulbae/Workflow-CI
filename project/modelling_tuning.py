@@ -47,7 +47,7 @@ rf = RandomForestClassifier(random_state=42)
 
 grid_search = GridSearchCV(rf, param_grid, scoring="accuracy", cv=3)
 
-with mlflow.start_run() as run:
+with mlflow.start_run(nested=True) as run:
     # Train model
     grid_search.fit(X_train, y_train)
 
