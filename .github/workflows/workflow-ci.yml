@@ -40,6 +40,12 @@ jobs:
           environment-file: project/conda.yaml
           auto-activate-base: false
       
+      # Clear Env
+      - name: Clear MLflow Environment Vars
+        run: |
+          unset MLFLOW_RUN_ID || true
+          unset MLFLOW_EXPERIMENT_ID || true
+      
       # Run MLflow Training
       - name: Run MLflow Project
         run: |
@@ -49,7 +55,7 @@ jobs:
           pip install -q dagshub 'mlflow>=2,<3' scikit-learn pandas numpy setuptools wheel
 
           cd project
-          mlflow run . -e train_tuning --env-manager=local
+          mlflow run . -e train_tuning --env-manager=local -P experiment_name="Random Forest_Grid Search"
 
       # Save artifact ke GitHub
       - name: Upload MLflow Artifacts

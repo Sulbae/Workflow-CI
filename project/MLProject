@@ -5,4 +5,6 @@ env_manager: local
 
 entry_points:
   train_tuning:
-    command: "python modelling_tuning.py"
+    parameters:
+      experiment_name: {type: str}
+    command: "python modelling_tuning.py --experiment_name {{experiment_name}}"

@@ -9,12 +9,12 @@ import random
 import numpy as np
 import os
 import time
+import argparse
 
 # Konfigurasi 
 DATASET_PATH = "water_potability_preprocessing.csv"
 TEST_SIZE = 0.25
 MODEL_NAME = "water_potability"
-EXPERIMENT_NAME = "Random Forest_Grid Search"
 
 param_grid = {
     "n_estimators": [10, 50, 100],
@@ -23,10 +23,12 @@ param_grid = {
 
 np.random.seed(42)
 
-# Set Tracking
-mlflow.set_tracking_uri("https://dagshub.com/Sulbae/Latihan-MLFlow.mlflow")
-# Set Nama Eksperimen
-mlflow.set_experiment(EXPERIMENT_NAME)
+parser = argparse.ArgumentParser()
+parser.add_argument("--experiment_name")
+args = parser.parse_args()
+
+mlflow.set_experiment(args.experiment_name)
+
 client = MlflowClient()
 
 # Load dataset
@@ -47,7 +49,7 @@ rf = RandomForestClassifier(random_state=42)
 
 grid_search = GridSearchCV(rf, param_grid, scoring="accuracy", cv=3)
 
-with mlflow.start_run(nested=True) as run:
+with mlflow.start_run() as run:
     # Train model
     grid_search.fit(X_train, y_train)
 
