@@ -72,7 +72,7 @@ jobs:
           export MLFLOW_TRACKING_USERNAME=${{ env.MLFLOW_TRACKING_USERNAME }}
           export MLFLOW_TRACKING_PASSWORD=${{ env.MLFLOW_TRACKING_PASSWORD }}
           
-          LATEST_VERSION=$(python -c 'import mlflow; from mlflow.tracking import MlflowClient; client = MlflowClient(); versions = client.search_model_versions("name=\"water_potability\""); version_nums = [int(v.version) for v in versions]; print(max(version_nums) if version_nums else 0)')
+          LATEST_VERSION=$(python -c 'import os, mlflow; from mlflow.tracking import MlflowClient; mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"]); client = MlflowClient(); versions = client.search_model_versions("name=\"water_potability\""); version_nums = [int(v.version) for v in versions]; print(max(version_nums) if version_nums else 0)')
           
           echo "Model version found: $LATEST_VERSION"
           
