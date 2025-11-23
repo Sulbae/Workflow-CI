@@ -27,8 +27,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--experiment_name")
 args = parser.parse_args()
 
-mlflow.set_experiment(args.experiment_name)
-
 client = MlflowClient()
 
 # Load dataset
@@ -49,41 +47,44 @@ rf = RandomForestClassifier(random_state=42)
 
 grid_search = GridSearchCV(rf, param_grid, scoring="accuracy", cv=3)
 
-with mlflow.start_run() as run:
-    # Train model
-    grid_search.fit(X_train, y_train)
+active_run = mlflow.active_run()
+if active_run is None:
+    raise Exception("ERROR: No active MLflow run. MLflow Project did not start a run.")
 
-    # Ambil model terbaik
-    best_model = grid_search.best_estimator_
-    best_params = grid_search.best_params_
+run_id = mlflow.active_run().info.run_id
 
-    # Log Param
-    mlflow.log_param("test_size", TEST_SIZE)
-    mlflow.log_params(best_params)
+# Train model
+grid_search.fit(X_train, y_train)
 
-    # Evaluate model
-    y_pred = best_model.predict(X_test)
+# Ambil model terbaik
+best_model = grid_search.best_estimator_
+best_params = grid_search.best_params_
 
-    accuracy = best_model.score(X_test, y_test)
-    precision = precision_score(y_test, y_pred, average="weighted")
-    recall = recall_score(y_test, y_pred, average="weighted")
-    f1 = f1_score(y_test, y_pred, average="weighted")
+# Log Param
+mlflow.log_param("test_size", TEST_SIZE)
+mlflow.log_params(best_params)
 
-    # Log Metrics
-    mlflow.log_metric("accuracy", accuracy)
-    mlflow.log_metric("precision", precision)
-    mlflow.log_metric("recall", recall)
-    mlflow.log_metric("f1_score", f1)
+# Evaluate model
+y_pred = best_model.predict(X_test)
 
-    # Log model
-    if best_model is not None:
-        mlflow.sklearn.log_model(
-            sk_model=best_model,
-            artifact_path="best_model",
-            input_example=input_example
-        )
-    
-    run_id = run.info.run_id
+accuracy = best_model.score(X_test, y_test)
+precision = precision_score(y_test, y_pred, average="weighted")
+recall = recall_score(y_test, y_pred, average="weighted")
+f1 = f1_score(y_test, y_pred, average="weighted")
+
+# Log Metrics
+mlflow.log_metric("accuracy", accuracy)
+mlflow.log_metric("precision", precision)
+mlflow.log_metric("recall", recall)
+mlflow.log_metric("f1_score", f1)
+
+# Log model
+if best_model is not None:
+    mlflow.sklearn.log_model(
+        sk_model=best_model,
+        artifact_path="best_model",
+        input_example=input_example
+    )
 
 # Model Regis
 model_uri = f"runs:/{run_id}/best_model"
