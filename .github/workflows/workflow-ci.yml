@@ -54,15 +54,14 @@ jobs:
           
           pip install -q dagshub 'mlflow>=2,<3' scikit-learn pandas numpy setuptools wheel
 
-          cd project
-          mlflow run . -e train_tuning --env-manager=local -P experiment_name="Random Forest_Grid Search"
+          mlflow run project -e train_tuning --env-manager=local -P experiment_name="Random Forest_Grid Search"
 
       # Save artifact ke GitHub
       - name: Upload MLflow Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: mlflow-artifacts
-          path: project/mlruns
+          path: mlruns
 
       # Get latest model version
       - name: Get latest model version
